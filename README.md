@@ -1,48 +1,64 @@
-# 3.11continuous-deployment-Container
-Step 1: Create a New Node.js Application using Express
-Install Express Generator globally (if not already installed):
-![image](https://github.com/SimonLiou/3.11continuous-deployment-Container/assets/127756736/fa91a7fd-d46d-470b-9f2a-2811cc8fdcea)
+Preparation
+AWS account with permissions to create ECR repository and push Docker images.
+GitHub account with a repository containing Dockerfile and other necessary files for your Docker image.
+Docker installed locally on your development machine.
+Basic familiarity with Docker and GitHub Actions.
+Lesson Overview
+Docker has revolutionized how applications are deployed and managed by allowing developers to package their applications and dependencies into a single container that can run consistently across different environments. AWS Elastic Container Registry (ECR) is a fully managed container registry that makes it easy to store, manage, and deploy Docker images to run containerized applications on AWS.
 
-2: Generate a new Express application:
+GitHub Actions is a powerful automation tool provided by GitHub that allows you to automate various tasks, including building and pushing Docker images, based on triggers such as code pushes, pull requests, or scheduled events. In this tutorial, we will walk through the steps to build and push Docker images to AWS ECR using GitHub Actions, enabling a seamless and automated workflow for your containerized applications.
 
-![image](https://github.com/SimonLiou/3.11continuous-deployment-Container/assets/127756736/8f5b0fb1-7025-4c4e-9883-e1c1468ec40c)
+Part 1 - Create an ECR Repository
+Redo prev. lesson to create repository (3.4 Cloud Native Application - Containerization I & 3.5 Cloud Native Application - Containerization II)
 
-Step 2: Set Up Automatic Testing using Jest
-Install Jest and related dependencies:
-![image](https://github.com/SimonLiou/3.11continuous-deployment-Container/assets/127756736/8a7f5d4f-4d5f-43d4-a730-ec1127b77a9e)
+Part 2 - Configure AWS Credentials
+Redo prev. lesson to create repository (3.4 Cloud Native Application - Containerization I & 3.5 Cloud Native Application - Containerization II)
 
-Create a tests/ directory in your project's root.
+Part 3 - Create GitHub Actions Workflow
 
-Write test cases in the tests/ directory using the .test.js or .spec.js file naming convention.
+name: Deploy to ECR
 
-Update the package.json to include a test script:
+on:
+ 
+  push:
+    branches: [ master ]
 
-![image](https://github.com/SimonLiou/3.11continuous-deployment-Container/assets/127756736/214d68e3-7144-47b7-aa12-00c06d4cf885)
+jobs:
+  
+  build:
+    
+    name: Build Image
+    runs-on: ubuntu-latest
 
-Step 3: Create a Code Repository
-Create a new repository on a version control platform like GitHub.
+   
+    steps:
 
-Initialize your local Git repository and connect it to the remote repository:
-![image](https://github.com/SimonLiou/3.11continuous-deployment-Container/assets/127756736/788f4d64-4a09-4955-847b-fe59d67f27be)
+    - name: Check out code
+      uses: actions/checkout@v2
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
 
-Step 4: Create a Dockerfile
-Create a Dockerfile in the project's root directory (see the example Dockerfile in the previous response).
-Step 5: Set Up CI/CD Pipeline using GitHub Actions
-Create a .github/workflows directory in your repository.
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-Create a YAML file (e.g., ci-cd.yml) in .github/workflows to define your GitHub Actions workflow (see the example YAML in the previous response).
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: docker_nodejs_demo
+        IMAGE_TAG: nodejs_demo_image
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-Step 6: Push Docker Image to a Container Registry
-Depending on the registry you choose (e.g., Docker Hub or AWS ECR), follow their documentation to set up authentication and obtain necessary credentials.
 
-Add the necessary environment variables or secrets to your GitHub repository's settings to securely store registry credentials.
+Now, we will create a GitHub Actions workflow that will build and push Docker images to AWS ECR whenever changes are pushed to the repository. Follow these steps:
 
-Step 7: Set Up Amazon ECS
-In the AWS Management Console, navigate to Amazon ECS and create a new cluster.
-Step 8: Configure Task Definition and Service
-Create a task definition in ECS, specifying the Docker image, resources, networking, and other settings.
-
-Create an ECS service using the task definition, specifying desired instances, scaling settings, and load balancer configurations if needed.
-
-Step 9: Update CI/CD Pipeline for Deployment
-In the GitHub Actions workflow YAML, add a step to update the ECS service after a successful build and test (see the example YAML in the previous response).
+Navigate to the root of your GitHub repository and create a .github/workflows directory if it doesn't exist.
+Inside the .github/workflows directory, create a new YAML file, for example docker-ecr.yml, to define the workflow.
+Open the YAML file in a text editor and define the workflow as follows:
